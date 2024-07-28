@@ -1,1 +1,138 @@
+import time
+import re
+from selenium import webdriver
+from selenium.webdriver.common.by import By
+from selenium.webdriver.support.ui import WebDriverWait
+from selenium.webdriver.support import expected_conditions as EC
+from selenium.common.exceptions import TimeoutException, NoSuchElementException
+import pandas as pd
+
+driver = webdriver.Chrome()
+
+# Open the RedBus website
+driver.get("https://www.redbus.in/")
+time.sleep(5)
+driver.maximize_window()
+time.sleep(2)
+
+# Navigate through the routes
+Routes = driver.find_elements(By.XPATH, "//div[@class='rtcCards']")
+if Routes:
+    Routes[0].click()
+    time.sleep(10)
+else:
+    print("No routes found on the main page.")
+    driver.quit()
+    exit()
+
+area_route1 = []
+area_link1 = []
+
+Route_State = driver.find_elements(By.XPATH, "//div[@class='route_details']/a")
+for j in Route_State:
+    area_route1.append(j.text)
+    area_link1.append(j.get_attribute("href"))
+
+wait = WebDriverWait(driver, 20)
+pagination = wait.until(EC.presence_of_element_located((By.XPATH, "//div[@class='DC_117_paginationTable']")))
+
+for k in driver.find_elements(By.XPATH, "//div[@class='DC_117_pageTabs ']"):
+    driver.execute_script("arguments[0].scrollIntoView();", k)
+    driver.execute_script("arguments[0].click();", k)
+    time.sleep(10)
+    Route_State1 = driver.find_elements(By.XPATH, "//div[@class='route_details']/a")
+    for j in Route_State1:
+        area_route1.append(j.text)
+        area_link1.append(j.get_attribute("href"))
+        time.sleep(2)
+
+APbus_name = []
+APstart_time = []
+APduration = []
+APreach_time = []
+APrating = []
+APprice = []
+APseats = []
+Area = []
+
+# Loop over all collected route links
+for idx, link in enumerate(area_link1):
+    driver.get(link)
+    time.sleep(10)
+
+    datas1 = driver.find_elements(By.XPATH, "//div[@class='clearfix']/div[4]/div[2]")
+    if datas1:
+        datas1[0].click()
+
+        # Scroll to load all data
+        for _ in range(4):
+            driver.execute_script("window.scrollBy(0, document.body.scrollHeight)")
+            time.sleep(5)
+
+        # Extract bus data
+        bus_data_elements = driver.find_elements(By.XPATH, '//div[@class="clearfix row-one"]')
+        for data1 in bus_data_elements:
+            try:
+                bus_name = data1.find_element(By.XPATH, "./div[1]/div[1]").text
+            except NoSuchElementException:
+                bus_name = "N/A"
+            APbus_name.append(bus_name)
+
+            try:
+                start_time = data1.find_element(By.XPATH, "./div[2]/div[1]").text
+            except NoSuchElementException:
+                start_time = "N/A"
+            APstart_time.append(start_time)
+
+            try:
+                duration = data1.find_element(By.XPATH, "./div[3]/div[1]").text
+            except NoSuchElementException:
+                duration = "N/A"
+            APduration.append(duration)
+
+            try:
+                reach_time = data1.find_element(By.XPATH, "./div[4]/div[1]").text
+            except NoSuchElementException:
+                reach_time = "N/A"
+            APreach_time.append(reach_time)
+
+            try:
+                rating = data1.find_element(By.XPATH, "./div[5]/div[1]").text
+            except NoSuchElementException:
+                rating = "N/A"
+            APrating.append(rating)
+
+            try:
+                price = data1.find_element(By.XPATH, "./div[6]/div[1]").text
+            except NoSuchElementException:
+                price = "N/A"
+            APprice.append(price)
+
+            try:
+                seats = data1.find_element(By.XPATH, "./div[7]/div[1]").text
+            except NoSuchElementException:
+                seats = "N/A"
+            APseats.append(seats)
+
+            Area.append(area_route1[idx])
+
+        print("Processed link:", link)
+
+# Compile data into a DataFrame or other suitable format
+APSRTC_full_details = {
+    'bus_names': APbus_name,
+    'Depature': APstart_time,
+    'travel_hour': APduration, 
+    'arrival': APreach_time,
+    'star': APrating,
+    'rate': APprice,
+    'available_seats': APseats,
+    'Routes': Area
+}
+
+driver.quit()
+
+# Example: Convert the data into a pandas DataFrame
+df = pd.DataFrame(APSRTC_full_details)
+print(df)
 
