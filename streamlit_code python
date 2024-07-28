@@ -1,0 +1,83 @@
+import streamlit as st
+import pandas as pd
+from pydataset import data
+
+st.set_page_config(page_title="Bus Deatils")
+st.header("APSTRC RED BUS")
+data=pd.read_csv(r"C:\Users\LENOVO\Desktop\rajan\APSRTC.csv")
+#cols=list(data.columns)
+
+
+#st.title('Bus Route Information')
+
+# Initialize session state for toggling visibility
+if 'show_data' not in st.session_state:
+    st.session_state.show_data = False
+
+# Button to toggle the visibility of the DataFrame
+if st.button('All Routes APSRTC'):
+    st.session_state.show_data = not st.session_state.show_data
+
+# Conditionally display the DataFrame based on session state
+if st.session_state.show_data:
+    st.write("Full DataFrame:")
+    st.write(data)
+
+
+st.title('Bus Route Information')
+
+# Sidebar filters
+st.sidebar.header("Filter options")
+
+# Filter by route
+selected_route = st.sidebar.selectbox(
+    'Select a route',
+    ['All'] + data['Routes'].unique().tolist()
+)
+
+# Filter by bus name
+selected_bus = st.sidebar.selectbox(
+    'Select a bus',
+    ['All'] + data['bus_names'].unique().tolist()
+)
+
+# Filter by star rating
+data['star'] = pd.to_numeric(data['star'], errors='coerce')  # Convert to numeric, coerce errors to NaN
+data = data.dropna(subset=['star'])  # Drop rows with NaN values in 'star'
+star_values = sorted(data['star'].unique(), reverse=True)
+selected_star = st.sidebar.selectbox(
+    'Select rating',
+    ['All'] + list(map(str, star_values))
+)
+
+# Filter by price
+selected_price = st.sidebar.selectbox(
+    'Select price',
+    ['All'] + data['rate'].unique().tolist()
+)
+
+# Apply filters
+filtered_data = data.copy()
+
+if selected_route != 'All':
+    filtered_data = filtered_data[filtered_data['Routes'] == selected_route]
+
+if selected_bus != 'All':
+    filtered_data = filtered_data[filtered_data['bus_names'] == selected_bus]
+
+if selected_star != 'All':
+    selected_star_value = float(selected_star)
+    filtered_data = filtered_data[filtered_data['star'] == selected_star_value]
+
+if selected_price != 'All':
+    filtered_data = filtered_data[filtered_data['rate'] == selected_price]
+
+
+final_data = filtered_data.iloc[:, 1:]
+
+# Display the filtered DataFrame
+st.write(final_data)
+
+
+
+
