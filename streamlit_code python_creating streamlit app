@@ -82,7 +82,7 @@ if selected_star != 'All':
 filtered_data = filtered_data[(filtered_data['rate'] >= min_rate) & (filtered_data['rate'] <= max_rate)]
 
 # Remove the first two columns
-final_data = filtered_data.iloc[:, 2:]
+final_data = filtered_data.iloc[:, 1:]
 
 # Display the filtered DataFrame
 st.write(final_data)
